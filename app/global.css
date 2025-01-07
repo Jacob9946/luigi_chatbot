@@ -45,6 +45,14 @@ form {
     border-radius:0 0 10px 10px;
     overflow: hidden;
 }
+.prompt-suggestion-button{
+    background-color: #dce7ff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+}
 .loader{
     margin: 10px;
     width: 60px;
@@ -66,4 +74,13 @@ form {
     margin: 8px;
     box-shadow: #959da533 0 8px 24px;
     
+}
+.bubble.user{
+    border-radius:20px 20px 0 20px;
+    background-color: #e1f4ffff;
+    margin-left: auto;
+}
+.bubble.assistant {
+    border-radius: 20px 20px 20px 0;
+    background-color: #dce7ff;
 }

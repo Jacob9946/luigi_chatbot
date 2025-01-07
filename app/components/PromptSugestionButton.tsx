@@ -1,4 +1,4 @@
-const PromptSugestionButton = ({onClick}) => {
+const PromptSugestionButton = ({text, onClick}) => {
     return (
         <button 
             className="btn btn-primary prompt-sugestion-button"

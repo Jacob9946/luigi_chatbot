@@ -11,7 +11,16 @@ const Home = () => {
 
     const { append, isLoading, messages, input, handleInputChange, handleSubmit} = useChat()
 
-    const noMessages = true
+    const noMessages = !messages || messages.length === 0
+
+    const handlePrompt = ( promptText ) => {
+        const msg: Message = {
+            id: crypto.randomUUID(),
+            content: promptText,
+            role: "user",
+        }
+        append(msg)
+    }
 
   return (
     <main>
@@ -23,7 +32,7 @@ const Home = () => {
                       Witaj u swojego wirtualnego someliera. Luigi chętnie odpowie na twoje pytania.
                     </p>
                     <br/>
-                    {<PromptSuggestionsRow/>}
+                        <PromptSuggestionsRow onPromptClick={handlePrompt}/>
                 </>
             ) : (
                 <>

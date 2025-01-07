@@ -1,4 +1,6 @@
-const PromptSuggestionsRow = () => {
+import PromptSugestionButton from "./PromptSugestionButton";
+
+const PromptSuggestionsRow = (onPromptClick) => {
     const prompts = [
         "Jakie wino do mięsa?",
         "Jakie wino do ryb?",
@@ -8,7 +10,14 @@ const PromptSuggestionsRow = () => {
         "Gdzie produkuje się najwięcej wina?",
     ]
     return (
-        <div className="prompt-sugestion-row"></div>
+        <div className="prompt-sugestion-row">
+            {prompts.map((prompt, index) => 
+                <PromptSugestionButton 
+                    key={`suggestion-${index}`}
+                    text={prompt}
+                    onClick={() => onPromptClick(prompt)}
+        />)}
+        </div> 
     )
 } 
 export default PromptSuggestionsRow;
