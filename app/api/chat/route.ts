@@ -67,20 +67,8 @@ const response = await openai.chat.completions.create({
 })
 
     const stream = OpenAIStream(response)
-return new StreamingTextResponse(stream)
-} catch (err) {
-    if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Response error:', err.response.data);
-    } else if (err.request) {
-        // The request was made but no response was received
-        console.error('Request error:', err.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error:', err.message);
-    }
-    console.error('Config:', err.config);
-    throw err; // Re-throw the error to ensure it is not silently ignored
+    return new StreamingTextResponse(stream)
+    }   catch (err) {
+           throw err
 }
 }
