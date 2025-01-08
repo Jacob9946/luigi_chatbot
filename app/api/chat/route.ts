@@ -1,74 +1,97 @@
-import OpenAI from "openai"
-import { OpenAIStream, StreamingTextResponse } from "ai-stream-experimental";
-import { DataAPIClient } from "@datastax/astra-db-ts"
+import OpenAI from "openai";
+import { StreamingTextResponse, OpenAIStream } from 'ai';
 
-const{ 
-    ASTRA_DB_NAMESPACE, 
-    ASTRA_DB_COLLECTION, 
-    ASTRA_DB_API_ENDPOINT, 
-    ASTRA_DB_APPLICATION_TOKEN, 
-    OPENAI_API_KEY 
-} = process.env
+const {
+  ASTRA_DB_COLLECTION,
+  ASTRA_DB_API_ENDPOINT,
+  ASTRA_DB_APPLICATION_TOKEN,
+  OPENAI_API_KEY 
+} = process.env;
 
 const openai = new OpenAI({
-    apiKey: OPENAI_API_KEY
-})
+  apiKey: OPENAI_API_KEY,
+});
 
-const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN)
-const db = client.db(ASTRA_DB_API_ENDPOINT, {namespace: ASTRA_DB_NAMESPACE})
+// Define types for the incoming request data
+interface Message {
+  content: string;
+  role: 'user' | 'assistant' | 'system'; // Specify allowed roles
+}
+
+interface RequestBody {
+  messages: Message[];
+  useRag?: boolean;
+}
 
 export async function POST(req: Request) {
-    try{
-        const{messages} = await req.json()
-        const latestMessage = messages[messages.length - 1]?.content
+  try {
+    const { messages, useRag = true }: RequestBody = await req.json();
+    const lastMessage = messages[messages.length - 1];
 
-        let docContext = ""
-        const embedding = await openai.embeddings.create({
-            model: "text-embedding-ada-002",
-            input: latestMessage,
-            encoding_format: "float"
-        })
-        try{
-            const collection = await db.collection(ASTRA_DB_COLLECTION)
-            const cursor = collection.find(null, {
-                sort: {
-                    $vector: embedding.data[0].embedding,
-                },
-                limit: 10
-        })
+    let context = '';
 
-        const documents = await cursor.toArray()
-        const docsMap = documents?.map(doc => doc.text)
+    if (useRag) {
+      const embeddingResponse = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: lastMessage.content,
+      });
 
-        docContext = JSON.stringify(docsMap)
-        
-        }catch (err) {
-            console.error("Error quering db:", err)
-            docContext = ""
+      const vector = embeddingResponse.data[0].embedding;
+
+      const searchResponse = await fetch(
+        `${ASTRA_DB_API_ENDPOINT}/api/json/v1/vector-search/${ASTRA_DB_COLLECTION}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Cassandra-Token': ASTRA_DB_APPLICATION_TOKEN
+          },
+          body: JSON.stringify({
+            vectorField: "embedding",
+            vector: vector,
+            limit: 5
+          })
         }
-        const template = {
-            role: "system",
-            content:`Your name is Luigi, I am a virtual somelier. You love to talk about wines and you take the opportunity to show off your wine knowledge. If the question or context is not enough to answer, you can ask a follow-up question. 
-            You were built to advise on the selection of wines for different dishes and to tell interesting facts about wines. You are happy to answer questions about wines.
-            --------------------------------
-            START CONTEXT
-            ${docContext}
-            END CONTEXT
-            --------------------------------
-            QUESTION: ${latestMessage}
-            --------------------------------
-            `
-        } 
+      );
 
-const response = await openai.chat.completions.create({
-    model: "gpt-4",
-    stream: true,
-    messages: [template, ...messages]
-})
+      const searchResults = await searchResponse.json();
+      if (searchResults?.data) {
+        context = searchResults.data
+          .map((doc: { title: string; content: string; url: string }) => `Title: ${doc.title}\nContent: ${doc.content}\nURL: ${doc.url}`)
+          .join('\n\n');
+      }
+    }
 
-    const stream = OpenAIStream(response)
-    return new StreamingTextResponse(stream)
-    }   catch (err) {
-           throw err
-}
+    // Keep the original prompt structure with correct typing
+    const systemPrompt: Message = {
+      role: "system", // Ensure this is typed correctly
+      content: `You are an AI assistant answering questions about wine. Your name is Luigi and you like to talk about wines. 
+      ${useRag ? `Use the following context to answer questions. If the question cannot be answered 
+      using the context provided, provide a general answer based on your knowledge.
+
+      Context:
+      ${context}` : 'Provide accurate information about the wines, advise on what they go with and recommend the best varieties.'}`,
+    };
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [systemPrompt, ...messages],
+      temperature: 0.5,
+      max_tokens: 500,
+      stream: true
+    });
+
+    const stream = OpenAIStream(response);
+    return new StreamingTextResponse(stream);
+
+  } catch (error) {
+    console.error('Error:', error);
+    return new Response(
+      JSON.stringify({ error: "An error occurred processing your request" }), 
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
 }

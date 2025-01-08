@@ -1,16 +1,23 @@
-
+// app/layout.tsx
 import "./global.css"
+import type { Metadata } from 'next'
 
-export const metadata = {
+export const metadata: Metadata = {
     title: "Bot Luigi",
-    description: "Twój wirtualny asystent - sommelier",
+    description: "Twój wirtualny sommelier"
 }
-const RootLayout = ({ children }) => {
+
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode
+}) {
     return (
-        <html lang = "pl">
-            <body>{children}</body>
+        <html lang="en">
+            <head>
+                <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+            </head>
+            <body suppressHydrationWarning={true}>{children}</body>
         </html>
-            )
-        }
-        
-        export default RootLayout;
+    )
+}

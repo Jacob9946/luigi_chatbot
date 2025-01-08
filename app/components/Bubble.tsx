@@ -1,7 +1,14 @@
-const Bubble = ({message}) => {
-    const {content, role} = message 
+interface BubbleProps {
+    message: {
+        content: string;
+        role: "user" | "assistant" | "system" | "data";
+    }
+}
+
+export default function Bubble({ message }: BubbleProps) {
     return (
-        <div className={`${role}bubble`}>{content}</div>
-    )
-} 
-export default Bubble;
+        <div className={`bubble ${message.role}`}>
+            {message.content}
+        </div>
+    );
+}

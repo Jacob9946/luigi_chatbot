@@ -1,11 +1,18 @@
-const PromptSugestionButton = ({text, onClick}) => {
+// components/PromptSuggestionButton.tsx
+interface PromptSuggestionButtonProps {
+    text: string;
+    onClick: () => void;
+}
+
+const PromptSuggestionButton = ({ text, onClick }: PromptSuggestionButtonProps) => {
     return (
         <button 
-            className="btn btn-primary prompt-sugestion-button"
+            className="prompt-suggestion-button"
             onClick={onClick}
-            >
-             {text}
+        >
+            {text}
         </button>
-    );
+    )
 }
-export default PromptSugestionButton;
+
+export default PromptSuggestionButton

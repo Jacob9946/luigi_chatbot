@@ -1,53 +1,105 @@
 "use client"
+
+import { useEffect, useState } from "react"
 import Image from "next/image"
-import logochatbot from "./assets/logochatbot.jpeg"
 import { useChat } from "ai/react"
-import { Message } from "ai"
+import logochatbot from "./assets/luigi-somelier.png"
 import Bubble from "./components/Bubble"
-import PromptSuggestionsRow from "./components/PromptSuggestionsRow"
 import LoadingBubble from "./components/LoadingBubble"
+import PromptSuggestionRow from "./components/PromptSuggestionsRow"
 
-const Home = () => {
-
-    const { append, isLoading, messages, input, handleInputChange, handleSubmit} = useChat()
-
-    const noMessages = !messages || messages.length === 0
-
-    const handlePrompt = ( promptText ) => {
-        const msg: Message = {
-            id: crypto.randomUUID(),
-            content: promptText,
-            role: "user",
-        }
-        append(msg)
-    }
-
-  return (
-    <main>
-        <Image src={logochatbot} width="400" alt="Logo Chatbot" />
-        <section className={noMessages ? "" : "chat-container-open"}>
-            {noMessages ? (
-                <>
-                     <p className="stater-text">
-                      Witaj u swojego wirtualnego someliera. Luigi chętnie odpowie na twoje pytania.
-                    </p>
-                    <br/>
-                        <PromptSuggestionsRow onPromptClick={handlePrompt}/>
-                </>
-            ) : (
-                <>
-                    {messages.map((message, index) => <Bubble key={`message-${index}`} message={message}/>)}
-                    {isLoading && <LoadingBubble/>}
-                </>
-            )}
-
-        </section>
-        <form onSubmit={handleSubmit}>
-                <input className="question-box" onChange={handleInputChange} value={input} placeholder="Wpisz zapytanie.."/>
-                <input type="submit" />
-            </form>
-    </main>
-  )
+interface ChatMessage {
+    content: string;
+    role: 'user' | 'assistant';
 }
 
-export default Home;
+export default function Page() {
+    const [isMounted, setIsMounted] = useState(false)
+    const { 
+        append, 
+        isLoading, 
+        messages, 
+        input, 
+        handleInputChange, 
+        handleSubmit, 
+        error 
+    } = useChat({
+        api: '/api/chat',
+        onError: (error) => {
+            console.error('Chat error:', error);
+        },
+        onFinish: (message) => {
+            console.log('Finished message:', message);
+        },
+    })
+    
+    const noMessage = !messages || messages.length === 0
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
+    const handlePromptClick = async (promptText: string) => {
+        try {
+            await append({
+                content: promptText,
+                role: 'user' as ChatMessage['role'],
+            });
+        } catch (error) {
+            console.error('Error in handlePromptClick:', error);
+        }
+    }
+
+    if (!isMounted) {
+        return null
+    }
+
+    return (
+        <main>
+            <Image className="main-img" src={logochatbot} width={350} alt="Chatbot Logo"/>
+            <section className={noMessage ? "" : "populated"}>
+                {noMessage ? (
+                    <>
+                        <p className="starter-text">
+                            Witaj. Jestem Luigi, jestem wirtualnym sommelierem. Jak mogę Ci pomóc?
+                        </p>
+                        <br/>
+                        <PromptSuggestionRow onPromptClick={handlePromptClick}/>
+                    </>
+                ) : (
+                    <>
+                        {messages.map((message, index) => (
+                            <Bubble 
+                                key={index}
+                                message={{
+                                    content: message.content,
+                                    role: message.role as ChatMessage['role']
+                                }}
+                            />
+                        ))}
+                        {isLoading && <LoadingBubble/>}
+                        {error && (
+                            <div className="error-message">
+                                An error occurred. Please try again.
+                            </div>
+                        )}
+                    </>
+                )}
+            </section>
+            <form onSubmit={handleSubmit}>
+                <input 
+                    className="question-box" 
+                    onChange={handleInputChange} 
+                    value={input} 
+                    placeholder="Zadaj mi pytanie..."
+                    type="text"
+                />
+                <input className="send-button" 
+                    type="submit" 
+                    disabled={isLoading}
+                    value="Wyślij"
+                />
+            </form>
+        </main>
+    )
+}
