@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       model: "gpt-4",
       messages: [systemPrompt, ...messages],
       temperature: 0.5,
-      max_tokens: 500,
+      max_tokens: 1500,
       stream: true
     });
 
