@@ -29,7 +29,7 @@ const splitter = new RecursiveCharacterTextSplitter({
     chunkOverlap: 100
 })
 
-const createCollection = async (SimilarityMetric: SimilarityMetric = "dot_product") => {
+const createCollection = async (SimilarityMetric: SimilarityMetric = "cosine") => {
     const res = await db.createCollection(ASTRA_DB_COLLECTION, {
         vector: {
             dimension: 1536,

@@ -30,12 +30,19 @@ section{
     width: 100%;
 }
 section.chat-container-open{
-    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    overflow: scroll;
+    max-height: 350px;
+    overflow: auto;
 }
+.populated{
+    max-height: 350px; /* Maksymalna wysokość sekcji z wiadomościami */
+    overflow-y: auto; /* Włącza przewijanie w pionie */
+    padding: 10px; /* Dodatkowa przestrzeń wewnętrzna */
+    border-radius: 8px;
+}
+
 .main-img{
     border-radius: 18px;
     -webkit-box-shadow: 8px 8px 24px 0px rgba(0, 0, 0, 0.6);
@@ -123,3 +130,27 @@ form {
     background-color: #dce7ff;
     margin: 5px;
 }
+
+::-webkit-scrollbar {
+    width: 12px; 
+    height: 12px; 
+  }
+  
+  /* Tło scrollbara */
+  ::-webkit-scrollbar-track {
+    background: #f0f0f0; /* Kolor tła paska */
+    border-radius: 10px; /* Zaokrąglenie */
+  }
+  
+  /* "Rączka" (thumb) scrollbara */
+  ::-webkit-scrollbar-thumb {
+    background: #888; /* Kolor suwaka */
+    border-radius: 10px;
+    border: 2px solid #f0f0f0; /* Obramowanie wokół suwaka */
+  }
+  
+  /* Styl hover na thumb */
+  ::-webkit-scrollbar-thumb:hover {
+    cursor: pointer;
+    background: #555; /* Kolor suwaka po najechaniu myszą */
+  }
